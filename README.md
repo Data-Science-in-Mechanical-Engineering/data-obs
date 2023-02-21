@@ -1,14 +1,5 @@
 # Data-Driven Observability Analysis for Nonlinear Stochastic Systems
 
-## Cloning
-
-This project uses git submodules.
-After cloning the repo, you should run these two comments to fetch the code of the submodules:
-```
-git submodule init
-git submodule update
-```
-
 ## Installation
 
 We recommend using [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html), 
