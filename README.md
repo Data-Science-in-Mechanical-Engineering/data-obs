@@ -119,3 +119,15 @@ to evaluate existing results and plot the estimation by the EKF. In these
 scripts, `test_sigma` is the lengthscale of the Gaussian kernel, while 
 `test_alpha` is the confidence level alpha of the test (sometimes called 
 `sigma` respectively `alpha` in other scripts if name is not ambiguous).
+
+
+
+## If you use this repo, please cite:
+```
+@article{paper,
+	author = {Massiani, Pierre-Fran\c{c}ois and Buisson-Fenet, Mona and Solowjow, Friedrich and {Di Meglio}, Florent and Trimpe, Sebastian},
+	journal = {arXiv preprint arXiv:2302.11979},
+	title = {{Data-Driven Observability Analysis for Nonlinear Stochastic Systems}},
+	year = {2023}
+}
+```
