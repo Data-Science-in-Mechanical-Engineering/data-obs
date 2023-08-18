@@ -133,7 +133,8 @@ if __name__ == '__main__':
     T = 2
     dt = 1e-2
     alpha = 0.05
-    sigma = 5
+    # sigma = 5
+    sigma = None
 
     dump_specs(experiment_folder, locals().copy())  # logging
 

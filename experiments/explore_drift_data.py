@@ -71,8 +71,8 @@ def get_other_trajs_and_meas(others, allocation, reference):
 
 if __name__ == "__main__":
     PLOT_RESULTS = True
-    PLOT_DATA = True
-    PLOT_SIGMAS = False
+    PLOT_DATA = False
+    PLOT_SIGMAS = True
 
     ROOT = Path(__file__).parent.parent
     RESULTS = ROOT / 'Results' / 'Drift'
@@ -128,8 +128,9 @@ if __name__ == "__main__":
         plt.savefig(os.path.join(experiment_folder, f'rejected.pdf'),
                     bbox_inches="tight")
         plt.figure()
-        plt.imshow(thresholds, extent=extent, origin='lower')
-        plt.title('Test Threshold')
+        # plt.imshow(thresholds, extent=extent, origin='lower')
+        plot_mmd(fig_file=os.path.join(experiment_folder, f'thresholds.pdf'), 
+                 mmds=thresholds, ref=ref, extent=extent)
         plt.figure()
         plt.imshow(mmds, extent=extent, origin='lower')
         plt.title('MMD')
@@ -152,14 +153,18 @@ if __name__ == "__main__":
         )
         # plt.title(f'MMD Slice at y={other_references[-1][0]}')
 
-        if PLOT_SIGMAS:
-            sigmas = np.load(experiment_folder / 'sigmas.npy')
-            spec_file = experiment_folder / 'Specifications.txt'
-            with spec_file.open('a') as f:
-                print(f'Sigmas quantiles (0.1, 0.5, 0.9): '
-                      f'{np.quantile(sigmas, (0.1, 0.5, 0.9))}', file=f)
-            sigmas_fig = experiment_folder / 'sigmas.pdf'
-            plot_mmd(fig_file=sigmas_fig, mmds=sigmas, ref=ref, extent=extent)
+    if PLOT_SIGMAS:
+        m = others.min()
+        M = others.max()
+        extent = (m, M, m, M)
+        sigmas = np.load(experiment_folder / 'sigmas.npy')
+        spec_file = experiment_folder / 'Specifications.txt'
+        with spec_file.open('a') as f:
+            print(f'Sigmas quantiles (0.1, 0.5, 0.9): '
+                    f'{np.quantile(sigmas, (0.1, 0.5, 0.9))}', file=f)
+        sigmas_fig = experiment_folder / 'sigmas.pdf'
+        plt.figure()
+        plot_mmd(fig_file=sigmas_fig, mmds=sigmas, ref=ref, extent=extent)
 
     if PLOT_DATA:
         for reference in other_references:
@@ -168,5 +173,5 @@ if __name__ == "__main__":
             plot_init_and_other(init_trajs, other_trajs, others[index_other])
             plot_init_and_other(init_meas, other_meas, others[index_other])
 
-    if PLOT_RESULTS or PLOT_DATA:
+    if PLOT_RESULTS or PLOT_DATA or PLOT_SIGMAS:
         plt.show()
