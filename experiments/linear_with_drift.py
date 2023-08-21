@@ -131,10 +131,13 @@ if __name__ == '__main__':
     N_traj_initial_state = 30
     N_traj_others = 30
     T = 2
+    sigma = 5
+    # T = 10
+    # sigma = 373
+    # T = 5
+    # sigma = 149
     dt = 1e-2
     alpha = 0.05
-    # sigma = 5
-    sigma = None
 
     dump_specs(experiment_folder, locals().copy())  # logging
 

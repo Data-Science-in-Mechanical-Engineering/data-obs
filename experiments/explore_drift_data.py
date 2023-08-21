@@ -72,11 +72,11 @@ def get_other_trajs_and_meas(others, allocation, reference):
 if __name__ == "__main__":
     PLOT_RESULTS = True
     PLOT_DATA = False
-    PLOT_SIGMAS = True
+    PLOT_SIGMAS = False
 
     ROOT = Path(__file__).parent.parent
     RESULTS = ROOT / 'Results' / 'Drift'
-    EXPERIMENT_NAME = 'exp_0'
+    EXPERIMENT_NAME = 'exp_6'
     TRAJ_PATTERN = 'nb{}_trajs.npy'
     MEAS_PATTERN = 'nb{}_meas.npy'
     experiment_folder = RESULTS / EXPERIMENT_NAME
