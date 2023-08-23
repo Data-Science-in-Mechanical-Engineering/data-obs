@@ -10,7 +10,7 @@ import pandas as pd
 import sdeint
 import seaborn as sns
 from sklearn.preprocessing import StandardScaler
-from brokenaxes import brokenaxes
+# from brokenaxes import brokenaxes
 # https://github.com/bendichter/brokenaxes
 
 sys.path.append('.')
@@ -286,10 +286,14 @@ def EKF_RMSE12(t1, obs1, traj1, t2, obs2, traj2, results_folder, dim=None):
     RMSE21 = np.linalg.norm(error21, axis=-1)
     median21 = np.median(RMSE21, axis=0)
     quant21 = np.quantile(RMSE21, (0.25, 0.75), axis=0)
-    p11, = plt.plot(t1, median11, color='royalblue')
-    plt.fill_between(t1, quant11[0], quant11[1], alpha=0.3, color='royalblue')
-    p21, = plt.plot(t2, median21, color='sandybrown')
-    plt.fill_between(t2, quant21[0], quant21[1], alpha=0.3, color='sandybrown')
+    # p11, = plt.plot(t1, median11, color='royalblue')
+    # plt.fill_between(t1, quant11[0], quant11[1], alpha=0.3, color='royalblue')
+    # p21, = plt.plot(t2, median21, color='sandybrown')
+    # plt.fill_between(t2, quant21[0], quant21[1], alpha=0.3, color='sandybrown')
+    # p11, = plt.plot(t1, median11)
+    # plt.fill_between(t1, quant11[0], quant11[1], alpha=0.3)
+    # p21, = plt.plot(t2, median21)
+    # plt.fill_between(t2, quant21[0], quant21[1], alpha=0.3)
 
     # Error on theta_2
     RMSE12 = np.linalg.norm(error12, axis=-1)
@@ -298,22 +302,28 @@ def EKF_RMSE12(t1, obs1, traj1, t2, obs2, traj2, results_folder, dim=None):
     RMSE22 = np.linalg.norm(error22, axis=-1)
     median22 = np.median(RMSE22, axis=0)
     quant22 = np.quantile(RMSE22, (0.25, 0.75), axis=0)
-    p12, = plt.plot(t1, median12, color='slateblue')
-    plt.fill_between(t1, quant12[0], quant12[1], alpha=0.3, color='slateblue')
-    p22, = plt.plot(t2, median22, color='coral')
-    plt.fill_between(t2, quant22[0], quant22[1], alpha=0.3, color='coral')
+    # p12, = plt.plot(t1, median12, color='slateblue')
+    # plt.fill_between(t1, quant12[0], quant12[1], alpha=0.3, color='slateblue')
+    # p22, = plt.plot(t2, median22, color='coral')
+    # plt.fill_between(t2, quant22[0], quant22[1], alpha=0.3, color='coral')
+    p12, = plt.plot(t1, median12)
+    plt.fill_between(t1, quant12[0], quant12[1], alpha=0.3)
+    p22, = plt.plot(t2, median22)
+    plt.fill_between(t2, quant22[0], quant22[1], alpha=0.3)
 
     plt.yscale('log')
     # Nice legend
     # https://stackoverflow.com/questions/24787041/multiple-titles-in-legend-in-matplotlib
     from matplotlib.patches import Rectangle
     title_proxy = Rectangle((0, 0), 0, 0, color='w')
-    plt.legend([title_proxy, p11, p12, title_proxy, p21, p22],
-               ['Dataset 1', r'$\theta_1$', r'$\theta_2$',
-                'Dataset 2', r'$\theta_1$', r'$\theta_2$'], labelspacing=0.3)
+    # plt.legend([title_proxy, p11, p12, title_proxy, p21, p22],
+    #            ['Dataset 1', r'$\theta_1$', r'$\theta_2$',
+    #             'Dataset 2', r'$\theta_1$', r'$\theta_2$'], labelspacing=0.3)
+    plt.legend([p12, p22], ['Dataset 1', 'Dataset 2'], labelspacing=0.3,
+               fontsize='xx-large')
     plt.xlabel('Time')
     # plt.ylabel(rf'$\| \hat{{x}} - x \|$')
-    plt.ylabel('Estimation error')
+    plt.ylabel(rf'Estimation error $\| \hat{{\theta}}_2 - \theta_2 \|$')
     plt.savefig(os.path.join(results_folder, f'RMSE12_EKF.pdf'),
                 bbox_inches="tight")
     plt.clf()
@@ -327,7 +337,7 @@ if __name__ == '__main__':
     RESULTS = ROOT / 'Results' / 'QuanserQube'
     results_folder = RESULTS / f'measure{MEASURE}' / \
                      'QQS2_data_Qube_PFM_Ntraj140_Ntraj240_init1_0.0.0.0' \
-                     '._init2_0.70.0.0.' / 'nb_test10' / 'exp_0'
+                     '._init2_0.70.0.0.' / 'nb_test10' / 'Good2'
 
     seed_np = 0
     seed_rng = 42
