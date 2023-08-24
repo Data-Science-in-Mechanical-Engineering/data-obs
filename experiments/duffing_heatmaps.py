@@ -11,6 +11,11 @@ import numpy as np
 
 sys.path.append('.')
 
+# Dirty fix conda env probl
+# https://stackoverflow.com/questions/55714135/how-can-i-fix-an-omp-error-15-initializing-libiomp5-dylib-but-found-libomp
+import os
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
+
 from dynamical_systems.dynamical_systems import set_seeds, Duffing, \
     Measurement, GaussianNoise, ConstantInitializer, LinearBrownianMotionNoise, \
     NoController, NoNoise
@@ -98,9 +103,9 @@ if __name__ == '__main__':
     noise_std = 5e-2
     meas_noise_var = 5e-1
     T = 1
-    N_traj_ref = 50  # nb of traj for reference
-    N_traj_other = 50  # nb of traj for each grid point
-    N_grid = 100
+    N_traj_ref = 10  # nb of traj for reference
+    N_traj_other = 10  # nb of traj for each grid point
+    N_grid = 10
     grid_space = np.linspace(-2, 2, N_grid)
     grid = np.dstack(np.meshgrid(
         grid_space, grid_space, indexing='xy')).reshape(-1, dim)  # grid

@@ -1,3 +1,5 @@
+import multiprocessing
+
 import numpy as np
 import sdeint
 import scipy.integrate
@@ -136,15 +138,38 @@ class ContinuousTimeSystem(DynamicalSystem):
         trajs = [None] * N_traj
 
         if self.has_process_noise:
-            for n in range(N_traj):
+            # for n in range(N_traj):
+            #     trajectory = sdeint.itoint(
+            #         f=self.f,
+            #         G=self.G,
+            #         y0=initial_states[n],
+            #         tspan=t_span
+            #     )
+            #     trajs[n] = trajectory
+
+            def traj_simu(input_dic):
+                np.random.seed(input_dic['seed'])
+                print(input_dic['seed'])
                 trajectory = sdeint.itoint(
                     f=self.f,
                     G=self.G,
-                    y0=initial_states[n],
-                    tspan=t_span
-                )
-                trajs[n] = trajectory
+                    y0=input_dic['y0'],
+                    tspan=t_span)
+                print('traj_simu')
+                print(trajectory)
+                return trajectory
 
+            inputs = [
+                {'y0': initial_states[n],
+                 'seed': n}
+                for n in range(N_traj)]
+            import multiprocessing as multi
+            maximum_available_processes = multiprocessing.cpu_count() - 2
+            pool = multi.Pool(processes=maximum_available_processes)
+            print(inputs, maximum_available_processes)
+            trajs = pool.map(traj_simu, inputs)
+            pool.close()
+            print(trajs)
         else:
             def dynamics(t, x):
                 # Reverse arguments for compatibility with Scipy
