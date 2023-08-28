@@ -193,3 +193,42 @@ class QuanserQubeServo2(ContinuousTimeSystem):
             dfdh = jacrev(f)(x)
         dfdx = torch.squeeze(dfdh)
         return dfdx
+    
+    # Check observability analytically with both Kalman criterion and Lie 
+    # observability matrix, at reference point x with observation vector C
+    def check_observability(self, x, C):
+        x = torch.as_tensor(x)
+        C = torch.as_tensor(C)
+
+        def obs_vect1(x):
+            return torch.matmul(C, x.t())
+
+        def obs_vect2(x):
+            f = self.f_torch(x)
+            return torch.matmul(C, f.t())
+
+        def obs_vect3(x):
+            f = self.f_torch(x)
+            J = torch.squeeze(jacrev(self.f_torch)(x))
+            return torch.matmul(C, torch.matmul(J, f.t()))
+
+        def obs_vect4(x):
+            f = self.f_torch(x)
+            H = torch.squeeze(jacrev(obs_vect3)(x))
+            return torch.matmul(H, f.t())
+
+        J = torch.squeeze(jacrev(self.f_torch)(x))
+        K = torch.vstack((C,
+                          torch.matmul(C, J),
+                          torch.matmul(C, torch.matmul(J, J)),
+                          torch.matmul(C, torch.matmul(J, torch.matmul(J, J)))
+                          ))
+        print('Kalman observability criterion: rank',
+              torch.linalg.matrix_rank(K))
+        J1 = torch.squeeze(vmap(jacrev(obs_vect1))(x))
+        J2 = torch.squeeze(vmap(jacrev(obs_vect2))(x))
+        J3 = torch.squeeze(vmap(jacrev(obs_vect3))(x))
+        J4 = torch.squeeze(vmap(jacrev(obs_vect4))(x))
+        O = torch.vstack((J1, J2, J3, J4))
+        print('Lie observability matrix: rank',
+              torch.linalg.matrix_rank(O))
