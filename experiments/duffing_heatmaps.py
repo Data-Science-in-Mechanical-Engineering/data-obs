@@ -102,16 +102,21 @@ if __name__ == '__main__':
     init_var = 1e-2
     noise_std = 5e-2
     meas_noise_var = 5e-1
+    # T = 5
+    # sigma = 6794
+    # N_traj_ref = 50  # nb of traj for reference
+    # N_traj_other = 50  # nb of traj for each grid point
+    # N_grid = 100
     T = 1
-    N_traj_ref = 10  # nb of traj for reference
-    N_traj_other = 10  # nb of traj for each grid point
-    N_grid = 10
+    sigma = 1500
+    N_traj_ref = 50  # nb of traj for reference
+    N_traj_other = 50  # nb of traj for each grid point
+    N_grid = 100
     grid_space = np.linspace(-2, 2, N_grid)
     grid = np.dstack(np.meshgrid(
         grid_space, grid_space, indexing='xy')).reshape(-1, dim)  # grid
     N_others = len(grid)
     test_alpha = 0.05
-    sigma = 1500
 
     # Create system
     measurement = DuffingMeasurement(alpha=alpha, beta=beta)

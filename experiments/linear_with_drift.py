@@ -3,12 +3,15 @@ from sklearn.preprocessing import StandardScaler
 import numpy as np
 import time
 import sys
+from joblib import Parallel, delayed
+import tqdm
 
 sys.path.append('.')
 from experiments.drift_utils import dump_specs, get_new_experiment_folder, \
     log_test, log_initial_state_data, log_mmds
 import dynamical_systems.dynamical_systems as ds
 from kernels_dynamical_systems.custom_kernels import TrajectoryRBFTwoSampleTest
+from utils import tqdm_joblib
 
 
 def generate_trajs_from_initial_state(system, T, dt, initial_state, N_traj,
@@ -20,6 +23,87 @@ def generate_trajs_from_initial_state(system, T, dt, initial_state, N_traj,
     meas = system.get_output_trajectories(N_traj, T, traj=trajs)
     system.state_initializer = prev_initializer
     return trajs, meas, t
+
+def perform_test_on_other(meas_initial_state, meas_other, alpha, sigma):
+    scaler = StandardScaler()  # scaler over (2 * T * N, dim_obs)
+    dim_obs = meas_initial_state.shape[-1]
+    N_traj_initial_state = meas_initial_state.shape[0]
+    N_traj_other = meas_other.shape[0]
+    whole_meas = np.transpose(np.concatenate(
+        (meas_initial_state, meas_other), axis=1), (1, 0, 2)).reshape(-1, dim_obs)
+    scaler = scaler.fit(whole_meas)
+    scaled_meas1 = scaler.transform(
+        meas_initial_state.reshape(-1, dim_obs)).reshape(N_traj_initial_state, -1, dim_obs)
+    scaled_meas2 = scaler.transform(
+        meas_other.reshape(-1, dim_obs)).reshape(N_traj_other, -1, dim_obs)
+    test = TrajectoryRBFTwoSampleTest(
+        # meas_initial_state, meas_other,
+        scaled_meas1, scaled_meas2,
+        alpha=alpha,
+        sigma=sigma
+    )
+    t0 = time.time()
+    test.perform_test()
+    t1 = time.time()
+    rejected = not test.is_null_hypothesis_accepted()
+    mmd = test.test_stat
+    threshold = test.threshold
+    sigma = test.sigma
+    return rejected, mmd, threshold, sigma, test, t1-t0
+
+def generate_and_perform_test_on_other(system, T, dt, other, N_traj, meas_initial_state, alpha, sigma):
+    trajs, meas, _ = generate_trajs_from_initial_state(
+        system, T, dt, other, N_traj
+    )
+    rejected, mmd, threshold, sigma, test, test_time = perform_test_on_other(meas_initial_state, meas, alpha, sigma)
+    return trajs, meas, rejected, mmd, threshold, sigma, test, test_time
+
+def perform_test_over_grid(system, T, dt, grid, N_traj, meas_initial_state, alpha, sigma, experiment_folder):
+    inputs = [
+        {
+            'system':system,
+            'T':T,
+            'dt':dt,
+            'other':other,
+            'N_traj':N_traj,
+            'meas_initial_state':meas_initial_state,
+            'alpha':alpha,
+            'sigma':sigma
+        }
+        for other in grid
+    ]
+
+    rejecteds = np.zeros(grid.shape[0])
+    mmds = np.zeros(grid.shape[0])
+    thresholds = np.zeros(grid.shape[0])
+    test_times = np.zeros(grid.shape[0])
+    test_numbers_allocation = np.zeros(grid.shape[0])
+    sigmas = np.zeros(grid.shape[0])
+
+    max_reinit_before_dump = 100
+    iterations = int(np.ceil(grid.shape[0] / max_reinit_before_dump))
+    for i in range(iterations):
+        start = i*max_reinit_before_dump
+        stop = (i+1)*max_reinit_before_dump
+        out = Parallel(n_jobs=6)(
+            delayed(generate_and_perform_test_on_other)(**kwargs) for kwargs in inputs[start:stop]
+        )
+        others_i = grid[start:stop, ...]
+        trajs_i = np.array([out_item[0] for out_item in out])
+        meas_i = np.array([out_item[1] for out_item in out])
+        rejecteds[start:stop] = np.array([out_item[2] for out_item in out])
+        mmds[start:stop] = np.array([out_item[3] for out_item in out])
+        thresholds[start:stop] = np.array([out_item[4] for out_item in out])
+        sigmas[start:stop] = np.array([out_item[5] for out_item in out])
+        tests_i = np.array([out_item[6] for out_item in out])
+        test_times[start:stop] = np.array([out_item[7] for out_item in out])
+        for n_other, log_data in enumerate(zip(
+            others_i, trajs_i, meas_i, tests_i, test_times[start:stop])):
+            other, trajs_other, meas_other, test, test_time = log_data
+            test_numbers_allocation[start+n_other] = log_test(
+                experiment_folder, other, trajs_other, meas_other, test, test_time
+            )  # logging
+    return test_times, mmds, rejecteds, thresholds, test_numbers_allocation
 
 
 def get_mmd_map(system, initial_state, others, N_traj_initial_state,
@@ -37,42 +121,23 @@ def get_mmd_map(system, initial_state, others, N_traj_initial_state,
     if sigma is None:
         # Save map of sigma values since not fixed
         sigmas = np.zeros_like(mmds)
-    for n_other, other in enumerate(others):
-        if ((n_other + 1) % 50) == 0:
-            print(f'Simulation {n_other + 1}/{others.shape[0]}')
-        t1 = time.time()
-        trajs_other, meas_other, _ = generate_trajs_from_initial_state(
-            system,
-            T,
-            dt,
-            other,
-            N_traj_others
-        )
-        scaler = StandardScaler()  # scaler over (2 * T * N, dim_obs)
-        dim_obs = meas_initial_state.shape[-1]
-        whole_meas = np.transpose(np.concatenate(
-            (meas_initial_state, meas_other), axis=1), (1, 0, 2)).reshape(-1, dim_obs)
-        scaler = scaler.fit(whole_meas)
-        scaled_meas1 = scaler.transform(
-            meas_initial_state.reshape(-1, dim_obs)).reshape(N_traj_initial_state, -1, dim_obs)
-        scaled_meas2 = scaler.transform(
-            meas_other.reshape(-1, dim_obs)).reshape(N_traj_others, -1, dim_obs)
-        test = TrajectoryRBFTwoSampleTest(
-            # meas_initial_state, meas_other,
-            scaled_meas1, scaled_meas2,
-            alpha=alpha,
-            sigma=sigma  # TODO should be fixed for whole grid!
-        )
-        test.perform_test()
-        rejected[n_other] = not test.is_null_hypothesis_accepted()
-        mmds[n_other] = test.test_stat
-        thresholds[n_other] = test.threshold
-        t2 = time.time()
-        test_numbers_allocation[n_other] = log_test(
-            experiment_folder, other, trajs_other, meas_other, test, t2 - t1
-        )  # logging
-        if sigma is None:
-            sigmas[n_other] = test.sigma
+    test_times, mmds, rejected, thresholds, test_numbers_allocation = perform_test_over_grid(
+        system,
+        T,
+        dt,
+        others,
+        N_traj_others,
+        meas_initial_state,
+        alpha,
+        sigma,
+        experiment_folder
+    )
+    # for n_other, log_data in enumerate(zip(
+    #     others, trajs, meas, tests, test_times)):
+    #     other, trajs_other, meas_other, test, test_time = log_data
+    #     test_numbers_allocation[n_other] = log_test(
+    #         experiment_folder, other, trajs_other, meas_other, test, test_time
+    #     )  # logging
     results = {'t': t, 'mmds': mmds, 'rejected': rejected, 'thresholds':
         thresholds, 'test_numbers_allocation': test_numbers_allocation}
     if sigma is None:
