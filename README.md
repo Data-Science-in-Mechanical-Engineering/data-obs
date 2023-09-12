@@ -54,7 +54,7 @@ On an 8-core standard laptop with `n_jobs` set to 6, expect a few minutes for th
 ### Additional Results: Hyperparameter Study
 
 Once a simulation is completed, you can easily re-run the computation of the MMD heatmap and the test outcome by adding the `--plot_only [EXP_NAME]` option to the command.
-For instance, assuming you have a folder `Resuls/Linear/my_custom_simulation`, which uses $\alpha=0.05$, you can compute the class of indistinguishability with a higher level of confidence $\alpha=0.01$ as follows:
+For instance, assuming you have simulation results saved in `Resuls/Duffing/my_custom_simulation`, you can compute the class of indistinguishability with a lower level $\alpha=0.01$ as follows:
 ```sh
 python experiments/run.py --system duffing --initial_state 1 --process_noise 0.01 --measurement_noise 0.01 --n_grid 50 --n_traj 30 --T 2 --dt 0.01 --alpha 0.01 --n_jobs 1 --seed 0 --no_gramian --plot_only my_custom_simulation
 ```
