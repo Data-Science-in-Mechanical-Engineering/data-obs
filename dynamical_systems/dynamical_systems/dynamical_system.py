@@ -1,5 +1,3 @@
-import multiprocessing
-
 import numpy as np
 import sdeint
 import scipy.integrate
@@ -8,7 +6,7 @@ from collections.abc import Iterable
 from .noise import BrownianMotionNoise, NoNoise
 from .controller import NoController
 from .measurement import FullStateMeasurement
-
+from .utils import RNG
 
 class DynamicalSystem:
     def __init__(self, dim, state_initializer, controller=None, noise=None, meas=None, meas_noise=None, observers=None):
@@ -138,38 +136,56 @@ class ContinuousTimeSystem(DynamicalSystem):
         trajs = [None] * N_traj
 
         if self.has_process_noise:
-            # for n in range(N_traj):
-            #     trajectory = sdeint.itoint(
-            #         f=self.f,
-            #         G=self.G,
-            #         y0=initial_states[n],
-            #         tspan=t_span
-            #     )
-            #     trajs[n] = trajectory
-
-            def traj_simu(input_dic):
-                np.random.seed(input_dic['seed'])
-                print(input_dic['seed'])
+            ### ORIGINAL
+            for n in range(N_traj):
                 trajectory = sdeint.itoint(
                     f=self.f,
                     G=self.G,
-                    y0=input_dic['y0'],
-                    tspan=t_span)
-                print('traj_simu')
-                print(trajectory)
-                return trajectory
+                    y0=initial_states[n],
+                    tspan=t_span
+                )
+                trajs[n] = trajectory
 
-            inputs = [
-                {'y0': initial_states[n],
-                 'seed': n}
-                for n in range(N_traj)]
-            import multiprocessing as multi
-            maximum_available_processes = multiprocessing.cpu_count() - 2
-            pool = multi.Pool(processes=maximum_available_processes)
-            print(inputs, maximum_available_processes)
-            trajs = pool.map(traj_simu, inputs)
-            pool.close()
-            print(trajs)
+            ### VECTORIZED
+            # def simulate(initial_state):
+            #     return sdeint.itoint(
+            #         f=self.f,
+            #         G=self.G,
+            #         y0=initial_state,
+            #         tspan=t_span
+            #     )
+            # simulate_vect = np.vectorize(simulate)
+            # trajs = simulate_vect(np.array(initial_states))
+
+            ### MULTIPROCESSING
+            # inputs = [
+            #     [
+            #         'f':self.f,
+            #         'G':self.G,
+            #         'y0':initial_states[n],
+            #         'tspan':t_span,
+            #         # give a different RNG to each process
+            #         'generator':np.random.default_rng(seed=RNG.get().integers(1e6))
+            #     ]
+            #     for n in range(N_traj)
+            # ]
+            # maximum_available_processes = 4
+            # with multiprocessing.Pool(processes=maximum_available_processes) as pool:
+            #     trajs = pool.starmap(sdeint.itoint, inputs)
+
+            ### JOBLIB
+            # inputs = [
+            #     {
+            #         'f':self.f,
+            #         'G':self.G,
+            #         'y0':initial_states[n],
+            #         'tspan':t_span,
+            #         # give a different RNG to each process
+            #         # 'generator':np.random.default_rng(seed=RNG.get().integers(1e6))
+            #     }
+            #     for n in range(N_traj)
+            # ]
+            # trajs = Parallel(n_jobs=6)(delayed(sdeint.itoint)(**kwargs) for kwargs in inputs)
         else:
             def dynamics(t, x):
                 # Reverse arguments for compatibility with Scipy
