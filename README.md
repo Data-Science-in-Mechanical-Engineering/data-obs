@@ -63,96 +63,29 @@ If you remove the flag `--no_gramian` and `system` is set to `duffing`, these pa
 
 You can also force a specific choice of $\sigma$ instead of relying on the heuristic by adding `--sigma [VALUE]`.
 
-### Hardware
- 
-TODO
-
-
-## Usage
-
-Move into the repo of source files
-```
-cd repo/src
-```
-Then run one of the available experiments, e.g.
-```
-python experiments/LTI_test.py
-```
-
-
-## To reproduce the results of the paper:
-
-### 1. Linear system with noise:
+### Hardware Experiment: Furuta Pendulum
 
 To run the experiment:
+```sh
+python experiments/quanser_qube_hardware_test.py [MEASURE]
 ```
-python experiments/linear_with_drift.py
-```
-This creates a folder `Results/Drift/exp_0` and saves the results inside. To 
-plot the results, run:
-```
-python experiments/explore_drift_data.py
-```
-This will save the resulting plots in `Results/Drift/exp_0`. Change 
-`EXPERIMENT_NAME` and other parameters in `experiments/explore_drift_data.py` 
-to plots the results of another folder or with other options. 
-For instance, change `sigma` to `None` in `experiments/linear_with_drift.py` to 
-run the heuristic on `sigma`, then change `PLOT_SIGMAS` to `True` in 
-`experiments/explore_drift_data.py` to compute the quantiles of the values 
-of `sigma` over the grid as suggested by our meta-heuristic. These quantiles 
-are saved in `Results/Drift/exp_0/Specifications.txt` along with all 
-important parameters.
+where `[MEASURE]` is either 1, 2, or 3, representing respectively measuring only $\theta_1$, only $\theta_2$, or both $\theta_1$ and $\theta_2$.
+This will run ten tests in a row with the data provided in the repo, using a subset of `Ntraj1`, `Ntraj2` trajectories from 
+each experimental dataset. Change `meas_noise_var` directly in the script to modify the amount of measurement noise.
 
-### 2. Duffing oscillator:
-To run the experiment:
-```
-python experiments/duffing_heatmaps.py
-```
-with NEW set to True. Set `GRAMIANS` and `TEST` to True to also compute the 
-empirical observability Gramians and run a statistical test between two 
-arbitrary points with 1000 trajectories per point. Change `noise_std` and 
-`meas_noise_var` to modify the process resp. measurement noise.
-
-The results will be saved in `Results/Duffing/exp_0`; run the same script 
-again with `NEW` as `False` and `experiment_folder` as `RESULTS / 'exp_0'` to plot 
-existing results. 
-
-Run 
-```
-python experiments/duffing_plots.py
-```
-with `exps` a list of folders of existing results to plot them together as in 
-Fig. 2 of the paper.
-
-### 3. Furuta pendulum:
-To run the experiment:
-```
-python experiments/quanser_qube_hardware_test.py 1
-```
-where we input 1 to measure only $\theta_1$, 2 to measure only $\theta_2$, 
-and 12 to measure both. This will run ten tests in a row with the data 
-provided in the repo, using a subset of `Ntraj1`, `Ntraj2` trajectories from 
-each experimental dataset. Change `meas_noise_var` to add measurement noise.
-
-This will create a folder 
-```
+The results are saved in a folder
+```sh
 Results/QuanserQube/measure12/QQS2_data_Qube_PFM_Ntraj140_Ntraj240_init1_0.0.
 0.0._init2_0.70.0.0./nb_test10/exp_0
 ```
-for the results, where the title depends on the two reference points, the 
-number of trajectories for each test and the number of tests. 
+where the title depends on the two reference points, the number of trajectories for each test and the number of tests. 
 
-The result of each test and the mean results over all tests will be printed in 
-the terminal and in `Results/...
-/exp_0/Specifications.txt`. Run
+The result of each test and the mean results over all tests will be printed in the terminal and in `Results/(...)/exp_0/Specifications.txt`. Run
+```sh
+python experiments/explore_qube_data.py [MEASURE]
 ```
-python experiments/explore_qube_data.py 1
-```
-to evaluate existing results and plot the estimation by the EKF. In these 
-scripts, `test_sigma` is the lengthscale of the Gaussian kernel, while 
-`test_alpha` is the confidence level alpha of the test (sometimes called 
-`sigma` respectively `alpha` in other scripts if name is not ambiguous).
-
+to evaluate existing results and plot the estimation by the EKF. 
+You can modify the lengthscale of the Gaussian kernel and the level of the test by changing the parameters `test_sigma` and `test_alpha` in the script, respectively.
 
 
 ## If you use this repo, please cite:
