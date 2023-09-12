@@ -33,6 +33,40 @@ The `grep` part removes the last line of the export, which indicates the prefix 
 
 **Make sure that the `environment.yml` file specifies the versions of all packages. If it does not, add the missing ones.**
 
+## Reproducing Results
+
+### Simulations
+
+To reproduce the simulation results of Sections IV.A and IV.B, run the following commands from the root directory:
+```sh
+python experiments/run.py --system linear --process_noise 0.01 --measurement_noise 0.01 --n_grid 50 --n_traj 30 --T 2 --dt 0.01 --alpha 0.05 --n_jobs 1 --seed 0
+python experiments/run.py --system duffing --initial_state 1 --process_noise 0.05 --measurement_noise 0.5 --n_grid 100 --n_traj 50 --T 1 --dt 0.001 --alpha 0.05 --n_jobs 1 --seed 0
+python experiments/run.py --system duffing --initial_state 2 --process_noise 0.05 --measurement_noise 0.5 --n_grid 100 --n_traj 50 --T 1 --dt 0.001 --alpha 0.05 --n_jobs 1 --seed 0
+python experiments/run.py --system duffing --initial_state 2 --process_noise 0.5 --measurement_noise 0.5 --n_grid 100 --n_traj 50 --T 1 --dt 0.001 --alpha 0.05 --n_jobs 1 --seed 0
+```
+Each command will create a new directory in `Results/[Linear,Duffing]`, where the subdirectory depends on the value of the `system` parameter.
+The figures `mmd_with_rejected.pdf` in these directories then respectively correspond to Figures 1, 2a, 2b, and 2c in the article, up to cosmetic changes.
+
+For each of these commands, you can specify the number of multiprocessing threads that are spawned for parallelization by varying `n_jobs`. We recommend that you do not exceed the number of cores of your computer, minus 2.
+Each of these commands can take significant time to run due to long simulation times.
+On an 8-core standard laptop with `n_jobs` set to 6, expect a few minutes for the first command and several hours for the others.
+
+### Additional Results: Hyperparameter Study
+
+Once a simulation is completed, you can easily re-run the computation of the MMD heatmap and the test outcome by adding the `--plot_only [EXP_NAME]` option to the command.
+For instance, assuming you have a folder `Resuls/Linear/my_custom_simulation`, which uses $\alpha=0.05$, you can compute the class of indistinguishability with a higher level of confidence $\alpha=0.01$ as follows:
+```sh
+python experiments/run.py --system duffing --initial_state 1 --process_noise 0.01 --measurement_noise 0.01 --n_grid 50 --n_traj 30 --T 2 --dt 0.01 --alpha 0.01 --n_jobs 1 --seed 0 --no_gramian --plot_only my_custom_simulation
+```
+Importantly, the parameters `initial_state, process_noise, measurement_noise, n_grid, n_traj, T`, and `dt` are unused in this mode and may differ from the ones with which the simulation was performed.
+If you remove the flag `--no_gramian` and `system` is set to `duffing`, these parameters become relevant again.
+
+You can also force a specific choice of $\sigma$ instead of relying on the heuristic by adding `--sigma [VALUE]`.
+
+### Hardware
+ 
+TODO
+
 
 ## Usage
 
@@ -44,7 +78,6 @@ Then run one of the available experiments, e.g.
 ```
 python experiments/LTI_test.py
 ```
-
 
 
 ## To reproduce the results of the paper:
