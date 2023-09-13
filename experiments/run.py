@@ -7,6 +7,7 @@ import time
 import scipy.linalg as la
 from joblib import Parallel, delayed
 from argparse import ArgumentParser
+import numbers
 
 import dynamical_systems.dynamical_systems as ds
 from utils import JOB_SIZE, get_meas_from_to, get_initial_state_meas, log_test_results, get_new_experiment_folder, dump_specs, log_mmds, log_data, log_initial_state_data, plot_mmd
@@ -125,6 +126,7 @@ def perform_test(ref_meas, other_meas, alpha, sigma):
 
 
 def get_mmd_map(experiment_folder, alpha, sigma, grid, n_jobs):
+    scalar_sigma = isinstance(sigma, numbers.Number)
     rejecteds = np.zeros(grid.shape[0], dtype=bool)
     mmds = np.zeros(grid.shape[0], dtype=float)
     thresholds = np.zeros(grid.shape[0], dtype=float)
@@ -137,12 +139,20 @@ def get_mmd_map(experiment_folder, alpha, sigma, grid, n_jobs):
         effective_job_end = rejecteds[:job_end].shape[0]
         
         meas = get_meas_from_to(experiment_folder, job_start, job_end)
-        kwargs_list = [{
-            'ref_meas': ref_meas,
-            'other_meas': other_meas,
-            'alpha': alpha,
-            'sigma': sigma
-        } for other_meas in meas]
+        if scalar_sigma:
+            kwargs_list = [{
+                'ref_meas': ref_meas,
+                'other_meas': other_meas,
+                'alpha': alpha,
+                'sigma': sigma
+            } for other_meas in meas]
+        else:
+            kwargs_list = [{
+                'ref_meas': ref_meas,
+                'other_meas': other_meas,
+                'alpha': alpha,
+                'sigma': None
+            } for i,other_meas in enumerate(meas)]
         out = Parallel(n_jobs=n_jobs)(
             delayed(perform_test)(**kwargs) for kwargs in kwargs_list
         )
@@ -195,8 +205,21 @@ def compute_inobservable_direction(system, ref, T, dt):
     inobs_vect = eigvects[:, idx_min]
     return inobs_vect
 
+def compute_nominal_trajectory(system, ref, T, dt):
+    original_process_noise = system.noise
+    original_meas_noise = system.meas_noise
+    original_ref = system.state_initializer
+    system.noise = ds.NoNoise()
+    system.meas_noise = ds.NoNoise()
+    system.state_initializer = ds.ConstantInitializer(ref)
+    nominal_trajectory, _ = system.get_trajectories(N_traj=1, T=T, dt=dt)
+    system.noise = original_process_noise
+    system.mea_noise = original_meas_noise
+    system.state_initializer = original_ref
+    return nominal_trajectory
 
-def run(sys_type, choice_initial_state, process_noise_var, meas_noise_var, N_grid, N_traj, N_traj_ref, T, dt, sigma, alpha, no_gramian, n_jobs, plot_only):
+
+def run(sys_type, choice_initial_state, process_noise_var, meas_noise_var, N_grid, N_traj, N_traj_ref, T, dt, sigma, alpha, no_gramian, no_trajectory, n_jobs, plot_only):
     ROOT = Path(__file__).parent.parent
     dim = 2
     if sys_type == 'linear':
@@ -216,6 +239,7 @@ def run(sys_type, choice_initial_state, process_noise_var, meas_noise_var, N_gri
             'meas': ds.LinearMeasurement(np.array([-1., 1.])),
         }
         PLOT_GRAMIAN = False
+        PLOT_TRAJECTORY = False
     elif sys_type == 'duffing':
         RESULTS = ROOT / 'Results' / 'Duffing'
         SystemConstructor = ds.Duffing
@@ -228,6 +252,7 @@ def run(sys_type, choice_initial_state, process_noise_var, meas_noise_var, N_gri
             'meas': DuffingMeasurement(alpha=-1, beta=1)
         }
         PLOT_GRAMIAN = not no_gramian
+        PLOT_TRAJECTORY = not no_trajectory
     else:
         raise ValueError(f'Invalid system type {sys_type}.')
 
@@ -273,6 +298,9 @@ def run(sys_type, choice_initial_state, process_noise_var, meas_noise_var, N_gri
 
     if sigma is None:
         sigma = np.quantile(sigmas, 0.1)
+    if not isinstance(sigmas, np.ndarray) and sigmas == 'individual':
+        # Instance check is necessary to silence warning when comparing numpy array and string
+        sigma = sigmas
         
     if plot_only is None:
         dump_specs(experiment_folder, {k:v for k,v in locals().items() if k not in ['t','sigmas']})  # logging
@@ -295,6 +323,10 @@ def run(sys_type, choice_initial_state, process_noise_var, meas_noise_var, N_gri
         inobservable_direction = compute_inobservable_direction(system, initial_state, T, dt)
     else:
         inobservable_direction = None
+    if PLOT_TRAJECTORY:
+        nominal_trajectory = compute_nominal_trajectory(system, initial_state, 60, dt)
+    else:
+        nominal_trajectory = None
 
     log_mmds(
         experiment_folder, 
@@ -314,7 +346,8 @@ def run(sys_type, choice_initial_state, process_noise_var, meas_noise_var, N_gri
         mmds=mmds, 
         ref=initial_state, 
         extent=(xinf, xsup, xinf, xsup), 
-        add_vect=inobservable_direction
+        add_vect=inobservable_direction,
+        add_traj=nominal_trajectory
     )
     plot_mmd(
         fig_file=experiment_folder / 'mmds_with_rejected.pdf', 
@@ -322,7 +355,14 @@ def run(sys_type, choice_initial_state, process_noise_var, meas_noise_var, N_gri
         ref=initial_state, 
         extent=(xinf, xsup, xinf, xsup), 
         add_vect=inobservable_direction,
-        contour=rejecteds
+        contour=rejecteds,
+        add_traj=nominal_trajectory
+    )
+    plot_mmd(
+        fig_file=experiment_folder / 'thresholds.pdf', 
+        mmds=thresholds, 
+        ref=initial_state, 
+        extent=(xinf, xsup, xinf, xsup),
     )
     if plot_only is None:
         plot_mmd(
@@ -382,9 +422,8 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--sigma',
-        help="Value of \sigma to pick. Defaults to using the heuristic if unspecified.",
+        help="Value of \sigma to pick. Defaults to using the heuristic if unspecified. Can also be set to `individual` to use an individual value of \sigma for each pair of initial states.",
         default=None,
-        type=float
     )
     parser.add_argument(
         '--alpha',
@@ -393,8 +432,13 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--no_gramian',
-        help='Activating this flag disables the computation of the Gramian. Only relevant when --system is set to duffing',
+        help='Activating this flag disables the computation and plotting of the Gramian. Only relevant when --system is set to duffing',
         action="store_true",
+    )
+    parser.add_argument(
+        '--no_trajectory',
+        help='Activating this flag disables the computation and plotting of the nominal trajectory. Only relevant when --system is set to duffing',
+        action='store_true'
     )
     parser.add_argument(
         '--n_jobs',
@@ -431,6 +475,7 @@ if __name__ == '__main__':
         args.sigma, 
         args.alpha,
         args.no_gramian,
+        args.no_trajectory,
         args.n_jobs,
         args.plot_only,
     )
