@@ -37,31 +37,58 @@ The `grep` part removes the last line of the export, which indicates the prefix 
 
 ### Simulations
 
-To reproduce the simulation results of Sections IV.A and IV.B, run the following commands from the root directory:
+To reproduce the simulation results of Sections IV.A and IV.B, run the following command from the project's root directory and after having activated the virtual environment:
 ```sh
-python experiments/run.py --system linear --process_noise 0.01 --measurement_noise 0.01 --n_grid 50 --n_traj 30 --T 2 --dt 0.01 --alpha 0.05 --n_jobs 1 --seed 0
-python experiments/run.py --system duffing --initial_state 1 --process_noise 0.05 --measurement_noise 0.5 --n_grid 100 --n_traj 50 --T 1 --dt 0.001 --alpha 0.05 --n_jobs 1 --seed 0
-python experiments/run.py --system duffing --initial_state 2 --process_noise 0.05 --measurement_noise 0.5 --n_grid 100 --n_traj 50 --T 1 --dt 0.001 --alpha 0.05 --n_jobs 1 --seed 0
-python experiments/run.py --system duffing --initial_state 2 --process_noise 0.5 --measurement_noise 0.5 --n_grid 100 --n_traj 50 --T 1 --dt 0.001 --alpha 0.05 --n_jobs 1 --seed 0
+scripts/reproduce_article.sh
 ```
-Each command will create a new directory in `Results/[Linear,Duffing]`, where the subdirectory depends on the value of the `system` parameter.
-The figures `mmd_with_rejected.pdf` in these directories then respectively correspond to Figures 1, 2a, 2b, and 2c in the article, up to cosmetic changes.
+Importantly, before running this script, you should modify the variable `N_JOBS` on line 5 to match the number of multiprocessing threads you want the computations to spawn.
+We recommend that you do not exceed the number of cores of your computer, minus 2.
+Depending on your OS configuration, you may need to grant the script executing permissions, e.g. using `chmod u+x scripts/reproduce_article.sh`.
 
-For each of these commands, you can specify the number of multiprocessing threads that are spawned for parallelization by varying `n_jobs`. We recommend that you do not exceed the number of cores of your computer, minus 2.
-Each of these commands can take significant time to run due to long simulation times.
-On an 8-core standard laptop with `n_jobs` set to 6, expect a few minutes for the first command and several hours for the others.
+This script will create a folder `Results/Article`, where you will find the different figures.
+Re-running the script will not re-run an experiment if the corresponding folder exists in `Results/Article`.
+Furthermore, you should ensure that the folders `Results/{Linear,Duffing}/exp_0` do not exist before running `reproduce_article.sh`.
 
-### Additional Results: Hyperparameter Study
+### Hyperparameter Study
 
-Once a simulation is completed, you can easily re-run the computation of the MMD heatmap and the test outcome by adding the `--plot_only [EXP_NAME]` option to the command.
-For instance, assuming you have simulation results saved in `Resuls/Duffing/my_custom_simulation`, you can compute the class of indistinguishability with a lower level $\alpha=0.01$ as follows:
+You can run a hyperparameter study by executing the following command:
 ```sh
-python experiments/run.py --system duffing --initial_state 1 --process_noise 0.01 --measurement_noise 0.01 --n_grid 50 --n_traj 30 --T 2 --dt 0.01 --alpha 0.01 --n_jobs 1 --seed 0 --no_gramian --plot_only my_custom_simulation
+scripts/reproduce_rebuttal.sh
 ```
-Importantly, the parameters `initial_state, process_noise, measurement_noise, n_grid, n_traj, T`, and `dt` are unused in this mode and may differ from the ones with which the simulation was performed.
-If you remove the flag `--no_gramian` and `system` is set to `duffing`, these parameters become relevant again.
+Here again, you should specify the variable `N_JOBS` on line 5 of the script, grant executing permissions, and ensure that the folders `Results/{Linear,Duffing}/exp_0` do not exist prior to running the script.
+This script will store its results in `Results/Rebuttal`.
 
-You can also force a specific choice of $\sigma$ instead of relying on the heuristic by adding `--sigma [VALUE]`.
+#### Interpretation
+Figure R1 shows what happens when the choice of $\sigma$ is not made uniformly across $x_\mathrm{b}$: every $x_\mathrm{b}$ has a different $\sigma$, which is computed using the heuristic from [1].
+We see that the values of the MMD are no longer comparable across different $x_\mathrm{b}$, contrary to Figures 1 and 2 in the article.
+
+Figure R2 shows the influence of the parameter $T$.
+The specific values are available in the file `Specifications.txt`. We see that changing $T$ only mildly affects the relative ordering of the MMDs and the test's outcome, justifying the lack of hyperparameter study in the article.
+
+Figure R3 shows how $\alpha$ influences the test's outcome.
+Increasing $\alpha$ shrinks the set of points identified as indistinguishable (red pixels).
+This is expected from the definition, as the points that are _not_ in red are the ones where the test triggers and $\alpha$ is the test's false positive rate.
+Additionally, $\alpha$ does not influence the MMD values.
+
+#### Further Simulations
+
+You can perform additional simulations by running 
+```sh
+python experiments/run.py [PARAMETERS]
+```
+with appropriate parameters.
+We refer you to the scripts `scripts/{reproduce_article.sh,reproduce_rebuttal.sh}` to see what the available parameters are.
+You can also run 
+```sh
+python experiments/run.py --help
+```
+for documentation.
+
+If you do this, you may need to add the project's root directory to your `PYTHONPATH` prior to running `run.py`.
+This is achieved by running the following command from the project's root:
+```sh
+export PYTHONPATH=$PYTHONPATH:.
+```
 
 ### Hardware Experiment: Furuta Pendulum
 
@@ -97,3 +124,8 @@ You can modify the lengthscale of the Gaussian kernel and the level of the test 
 	year = {2023}
 }
 ```
+
+## References
+
+[1] Arthur Gretton, Karsten M. Borgwardt, Malte J. Rasch, Bernhard Sch ̈olkopf, and Alexander Smola. A
+Kernel Two-Sample Test. Journal of Machine Learning Research, 13(25):723–773, 2012
