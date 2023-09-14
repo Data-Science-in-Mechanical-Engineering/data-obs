@@ -12,7 +12,7 @@ if [ -d "./Results/Rebuttal/FigR1" ]; then
     echo "./Results/Rebuttal/FigR1 found. Skipping simulation of Figure R1"
 else
     echo "Computing Figure R1"
-    python experiments/run.py --system linear --initial_state 1 --process_noise 0.01 --measurement_noise 0.01 --n_grid 50 --n_traj 30 --T 2 --dt 0.01 --sigma individual --alpha 0.05 --seed 0 --n_jobs $N_JOBS
+    python experiments/run.py --system linear --initial_state 1 --process_noise 0.1 --measurement_noise 0.01 --n_grid 50 --n_traj 30 --T 2 --dt 0.01 --sigma individual --alpha 0.05 --seed 0 --n_jobs $N_JOBS
 
     mv ./Results/Linear/exp_0 ./Results/Rebuttal/FigR1
 fi
@@ -21,11 +21,11 @@ if [ -d "./Results/Rebuttal/FigR2e" ]; then
     echo "./Results/Rebuttal/FigR2e found. Skipping simulation of Figure R2"
 else
     echo "Computing Figure R2"
-    python experiments/run.py --system linear --initial_state 1 --process_noise 0.01 --measurement_noise 0.01 --n_grid 50 --n_traj 30 --T 5 --dt 0.01 --alpha 0.05 --seed 0 --n_jobs $N_JOBS
+    python experiments/run.py --system linear --initial_state 1 --process_noise 0.1 --measurement_noise 0.01 --n_grid 50 --n_traj 30 --T 5 --dt 0.01 --alpha 0.05 --seed 0 --n_jobs $N_JOBS
 
     mv ./Results/Linear/exp_0 ./Results/Rebuttal/FigR2b
 
-    python experiments/run.py --system linear --initial_state 1 --process_noise 0.01 --measurement_noise 0.01 --n_grid 50 --n_traj 30 --T 10 --dt 0.01 --alpha 0.05 --seed 0 --n_jobs $N_JOBS
+    python experiments/run.py --system linear --initial_state 1 --process_noise 0.1 --measurement_noise 0.01 --n_grid 50 --n_traj 30 --T 10 --dt 0.01 --alpha 0.05 --seed 0 --n_jobs $N_JOBS
 
     mv ./Results/Linear/exp_0 ./Results/Rebuttal/FigR2c
 

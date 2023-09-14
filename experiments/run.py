@@ -258,7 +258,7 @@ def run(sys_type, choice_initial_state, process_noise_var, meas_noise_var, N_gri
 
     kwargs_system.update({
         'state_initializer': ds.ConstantInitializer(initial_state),
-        'noise': ds.LinearBrownianMotionNoise(sigma=np.sqrt(process_noise_var)*np.eye(dim)),
+        'noise': ds.LinearBrownianMotionNoise(process_noise_var*np.eye(dim)),
         'meas_noise': ds.GaussianNoise(0., meas_noise_var),
     })
     system = SystemConstructor(**kwargs_system)

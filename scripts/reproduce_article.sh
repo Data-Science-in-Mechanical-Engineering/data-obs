@@ -12,7 +12,7 @@ if [ -d "./Results/Article/Fig1" ]; then
     echo "./Results/Article/Fig1 found. Skipping simulation of Figure 1"
 else
     echo "Computing Figure 1"
-    python experiments/run.py --system linear --initial_state 1 --process_noise 0.01 --measurement_noise 0.01 --n_grid 50 --n_traj 30 --T 2 --dt 0.01 --alpha 0.05 --seed 0 --n_jobs $N_JOBS
+    python experiments/run.py --system linear --initial_state 1 --process_noise 0.1 --measurement_noise 0.01 --n_grid 50 --n_traj 30 --T 2 --dt 0.01 --alpha 0.05 --seed 0 --n_jobs $N_JOBS
 
     mv ./Results/Linear/exp_0 ./Results/Article/Fig1
 fi
