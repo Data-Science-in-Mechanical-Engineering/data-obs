@@ -6,7 +6,7 @@ N_JOBS=6
 
 export PYTHONPATH=$PYTHONPATH:.
 
-mkdir ./Results/Article
+mkdir -p ./Results/Article
 
 if [ -d "./Results/Article/Fig1" ]; then
     echo "./Results/Article/Fig1 found. Skipping simulation of Figure 1"
