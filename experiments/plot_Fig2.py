@@ -11,7 +11,6 @@ import seaborn as sns
 import dynamical_systems.dynamical_systems as ds
 from experiments.run import compute_inobservable_direction, compute_nominal_trajectory, DuffingMeasurement
 
-plt.rcParams['pgf.texsystem'] = 'pdflatex'
 plt.rcParams['font.size'] = 16
 
 
@@ -153,7 +152,11 @@ def plot_fig2(path_a, path_b, path_c, forced_sigma):
     # fig.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)
 
     fig_path = ROOT / 'Results' / 'Article' / 'Fig2.pdf'
-    plt.savefig(fig_path, dpi=300, backend='pgf')
+    try:
+        plt.rcParams['pgf.texsystem'] = 'pdflatex'
+        plt.savefig(fig_path, dpi=300, backend='pgf')
+    except RuntimeError:
+        plt.savefig(fig_path, dpi=300)
 
 
 if __name__ == '__main__':

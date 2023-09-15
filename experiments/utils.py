@@ -192,7 +192,11 @@ def plot_mmd(fig_file, mmds, ref=None, extent=None, add_traj=None,
 
     ax.set_xlabel(r'$x_{\mathrm{b},1}$')
     ax.set_ylabel(r'$x_{\mathrm{b},2}$')
-    plt.savefig(str(fig_file), dpi=300, bbox_inches="tight", backend='pgf')
+    try:
+        plt.rcParams['pgf.texsystem'] = 'pdflatex'
+        plt.savefig(str(fig_file), dpi=300, bbox_inches="tight", backend='pgf')
+    except RuntimeError:
+        plt.savefig(str(fig_file), dpi=300, bbox_inches="tight")
     # plt.savefig(str(fig_file).replace('.pdf', '.pgf'), format='pgf', backend="pgf")
     plt.clf()
     plt.close('all')
