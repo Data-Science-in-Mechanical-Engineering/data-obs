@@ -1,5 +1,3 @@
-# TODO finish implementing utils and implement scripts
-
 from pathlib import Path
 from sklearn.preprocessing import StandardScaler
 import numpy as np
@@ -302,9 +300,7 @@ def run(sys_type, choice_initial_state, process_noise_var, meas_noise_var, N_gri
         # Instance check is necessary to silence warning when comparing numpy array and string
         sigma = sigmas
         
-    if plot_only is None:
-        dump_specs(experiment_folder, {k:v for k,v in locals().items() if k not in ['t','sigmas']})  # logging
-
+    dump_specs(experiment_folder, {k:v for k,v in locals().items() if k not in ['t','sigmas']})  # logging
 
     rejecteds, mmds, thresholds, _, test_numbers_allocation = get_mmd_map(
         experiment_folder=experiment_folder,

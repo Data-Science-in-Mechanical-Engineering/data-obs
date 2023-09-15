@@ -5,13 +5,8 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 import seaborn as sns
 
-# To avoid Type 3 fonts for submission https://tex.stackexchange.com/questions/18687/how-to-generate-pdf-without-any-type3-fonts
-# https://jwalton.info/Matplotlib-latex-PGF/
-# https://stackoverflow.com/questions/12322738/how-do-i-change-the-axis-tick-font-in-a-matplotlib-plot-when-rendering-using-lat
-plt.rc('text', usetex=True)
-plt.rc('text.latex', preamble=r'\usepackage{amsfonts}\usepackage{cmbright}')
-plt.rc('font', family='serif')
-plt.rcParams.update({'font.size': 16})
+plt.rcParams['pgf.texsystem'] = 'pdflatex'
+plt.rcParams['font.size'] = 16
 
 EXPFOLDER_PATTERN = 'exp_{}'
 TRAJS_PATTERN = 'nb{}_trajs.npy'
@@ -182,8 +177,8 @@ def plot_mmd(fig_file, mmds, ref=None, extent=None, add_traj=None,
                       .from_list("", ["red", "red"]),
                       rasterized=True)
         legend_elements = [Patch(facecolor='red', edgecolor='red',
-                                 label=r'$\mathrm{MMD}_b < \kappa$')]
-        # ax.legend(handles=legend_elements, loc='upper left')
+                                 label=r'$\widehat{\mathrm{MMD}} < \kappa$')]
+        ax.legend(handles=legend_elements, loc='upper left')
 
     if add_traj is not None:
         ax.scatter(add_traj[:, :, 0], add_traj[:, :, 1], c='orange', s=1,
@@ -195,9 +190,9 @@ def plot_mmd(fig_file, mmds, ref=None, extent=None, add_traj=None,
                  facecolor='white', edgecolor='black',
                  width=0.05)
 
-    ax.set_xlabel(r'$x_{b,1}$')
-    ax.set_ylabel(r'$x_{b,2}$')
-    plt.savefig(str(fig_file), bbox_inches="tight")
+    ax.set_xlabel(r'$x_{\mathrm{b},1}$')
+    ax.set_ylabel(r'$x_{\mathrm{b},2}$')
+    plt.savefig(str(fig_file), dpi=300, bbox_inches="tight", backend='pgf')
     # plt.savefig(str(fig_file).replace('.pdf', '.pgf'), format='pgf', backend="pgf")
     plt.clf()
     plt.close('all')
