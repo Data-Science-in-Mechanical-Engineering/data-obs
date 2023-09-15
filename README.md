@@ -1,37 +1,18 @@
 # Data-Driven Observability Analysis for Nonlinear Stochastic Systems
 
+This repository accompanies the article [Data-Driven Observability Analysis for Nonlinear Stochastic Systems](https://arxiv.org/abs/2302.11979).
+
+**Disclaimer**: the given commands and scripts assume that you have a UNIX-based operating system, e.g. Ubuntu or MacOS.
+If you are running Windows, you will most likely need to adapt the commands.
+
+
 ## Installation
-
-We recommend using [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html), 
-as it greatly facilitates installing some libraries for Mac M1 users, such as scipy.
-
-Clone the repo, `cd` into its root directory, and run:
+Clone the repository.
+Create a virtual environment, move to the project's root directory, and run 
+```sh
+pip install -r requirements.txt
 ```
-conda env create --file environment.yml
-```
-
-To activate the created environment:
-```
-conda activate dis-test
-```
-
-### Updating your environment if the YML file has changed
-
-Activate the environment, `cd` into the root directory, and run:
-```
-conda env update --file environment.yml --prune
-```
-
-### Updating the YML file
-
-Activate the environment, `cd` into the root directory, and run:
-```
-conda env export --from-history | grep -v "^prefix: " > environment.yml
-```
-The `--from-history` flag restricts the listed packages to the ones you installed manually, not listing the dependencies.
-The `grep` part removes the last line of the export, which indicates the prefix of the environment on your machine.
-
-**Make sure that the `environment.yml` file specifies the versions of all packages. If it does not, add the missing ones.**
+This project was developed using Python 3.10 and was not tested with other versions.
 
 ## Reproducing Results
 
@@ -48,6 +29,13 @@ Depending on your OS configuration, you may need to grant the script executing p
 This script will create a folder `Results/Article`, where you will find the different figures.
 Re-running the script will not re-run an experiment if the corresponding folder exists in `Results/Article`.
 Furthermore, you should ensure that the folders `Results/{Linear,Duffing}/exp_0` do not exist before running `reproduce_article.sh`.
+
+Finally, in order to reproduce the exact Figure 2, you should run 
+```sh
+export PYTHONPATH=$PYTHONPATH:. & python experiments/plot_Fig2.py
+```
+**after** having run `scripts/reproduce_article.sh`.
+Note that the legends will still look different if you do not have `pdflatex` installed.
 
 ### Hyperparameter Study
 
