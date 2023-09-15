@@ -5,7 +5,13 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 import seaborn as sns
 
-plt.rcParams['pgf.texsystem'] = 'pdflatex'
+import shutil
+if shutil.which('pdflatex'):
+    # If pdflatex is available, use it
+    plt.rcParams['pgf.texsystem'] = 'pdflatex'
+    backend = 'pgf'
+else:
+    backend = None
 plt.rcParams['font.size'] = 16
 
 EXPFOLDER_PATTERN = 'exp_{}'
@@ -192,12 +198,8 @@ def plot_mmd(fig_file, mmds, ref=None, extent=None, add_traj=None,
 
     ax.set_xlabel(r'$x_{\mathrm{b},1}$')
     ax.set_ylabel(r'$x_{\mathrm{b},2}$')
-    try:
-        plt.rcParams['pgf.texsystem'] = 'pdflatex'
-        plt.savefig(str(fig_file), dpi=300, bbox_inches="tight", backend='pgf')
-    except RuntimeError:
-        plt.savefig(str(fig_file), dpi=300, bbox_inches="tight")
-    # plt.savefig(str(fig_file).replace('.pdf', '.pgf'), format='pgf', backend="pgf")
+
+    plt.savefig(str(fig_file), dpi=300, bbox_inches="tight", backend=backend)
     plt.clf()
     plt.close('all')
 
