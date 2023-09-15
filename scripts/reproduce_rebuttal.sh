@@ -29,7 +29,7 @@ else
 
     mv ./Results/Linear/exp_0 ./Results/Rebuttal/FigR2c
 
-    python experiments/run.py --system duffing --initial_state 2 --process_noise 0.5 --measurement_noise 0.5 --n_grid 100 --n_traj 50 --T 3 --dt 0.001 --alpha 0.05 --seed 0 --n_jobs $N_JOBS
+    python experiments/run.py --system duffing --initial_state 1 --process_noise 0.05 --measurement_noise 0.5 --n_grid 100 --n_traj 50 --T 3 --dt 0.001 --alpha 0.05 --seed 0 --n_jobs $N_JOBS
 
     mv ./Results/Duffing/exp_0 ./Results/Rebuttal/FigR2e
 fi
