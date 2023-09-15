@@ -173,19 +173,21 @@ def plot_mmd(fig_file, mmds, ref=None, extent=None, add_traj=None,
             mask = np.ma.masked_where(contour == True, mmds)
             ax.imshow(mask, extent=extent, origin='lower',
                       cmap=matplotlib.colors.LinearSegmentedColormap
-                      .from_list("", ["red", "red"]))
+                      .from_list("", ["red", "red"]),
+                      rasterized=True)
         else:
             mask = np.ma.masked_where(contour == True, mmds)
             ax.imshow(mask, origin='lower',
                       cmap=matplotlib.colors.LinearSegmentedColormap
-                      .from_list("", ["red", "red"]))
+                      .from_list("", ["red", "red"]),
+                      rasterized=True)
         legend_elements = [Patch(facecolor='red', edgecolor='red',
                                  label=r'$\mathrm{MMD}_b < \kappa$')]
         # ax.legend(handles=legend_elements, loc='upper left')
 
     if add_traj is not None:
         ax.scatter(add_traj[:, :, 0], add_traj[:, :, 1], c='orange', s=1,
-                   alpha=alpha)
+                   alpha=alpha, rasterized=True)
 
     if add_vect is not None:
         ax.arrow(ref[0], ref[1], add_vect[0], add_vect[1],
